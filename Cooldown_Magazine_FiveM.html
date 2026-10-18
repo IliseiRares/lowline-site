@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090d17">
+  <meta name="description" content="Monitor cooldown de 3 ore pentru 14 magazine FiveM. Salvare automată locală, cronometre live și filtre.">
+  <title>Cooldown Magazine • FiveM RP Tools</title>
+  <style>
+    :root {
+      --bg:#090d17;--panel:#121928;--panel-2:#161f31;--panel-3:#0e1726;
+      --line:#2a364b;--line-bright:#3a4b66;--text:#f3f6ff;--muted:#98a7bd;--subtle:#6a7a96;
+      --blue:#54adff;--blue-bg:#13365c;--orange:#ff986f;--orange-light:#ffbc91;
+      --green:#61ddb3;--green-bg:#0e342e;--red:#fa8b91;--radius:18px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{min-width:320px;min-height:100vh;margin:0;color:var(--text);font-family:'Segoe UI',Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+      background:radial-gradient(ellipse 760px 410px at 6% -3%,rgba(35,102,211,.17),transparent 75%),radial-gradient(ellipse 740px 490px at 100% 10%,rgba(247,118,80,.095),transparent 75%),var(--bg)}
+    body:before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:linear-gradient(rgba(112,146,205,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(112,146,205,.035) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(black,transparent 90%)}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    button:focus-visible,input:focus-visible,select:focus-visible,[role="button"]:focus-visible,summary:focus-visible{outline:3px solid #6bb9ff;outline-offset:3px}
+    button:disabled{cursor:default;opacity:.48}
+    [hidden]{display:none!important}
+    .wrap{max-width:1234px;width:calc(100% - 40px);margin:auto;padding:29px 0 42px}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:32px}
+    .brand{display:flex;align-items:center;gap:12px;font-size:12px;font-weight:850;letter-spacing:2px}
+    .brand-mark{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#ffbf89,#fb795f);box-shadow:0 5px 25px #f68f6037;color:#111625}
+    .brand-mark svg{width:22px;height:22px}.brand-accent{color:var(--orange)}
+    .top-meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{border:1px solid var(--line);background:#131d2e;color:#a9b9cf;padding:9px 13px;border-radius:999px;font-size:10px;font-weight:850;letter-spacing:.7px;white-space:nowrap}
+    .pill b{color:var(--green)}.live-dot{display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 12px #61ddb380;margin-right:7px}
+    .hero{display:flex;justify-content:space-between;align-items:end;gap:23px;margin-bottom:25px}
+    .eyebrow,.kicker{margin:0 0 10px;color:var(--orange);font-size:11px;font-weight:900;letter-spacing:2.7px}
+    h1{font-weight:900;font-size:clamp(32px,4.5vw,54px);letter-spacing:-1.9px;line-height:1.1;margin:0}
+    h1 span{color:transparent;background:linear-gradient(115deg,#ffb887,#ff806e);-webkit-background-clip:text;background-clip:text}
+    .hero-description{max-width:695px;color:var(--muted);font-size:13px;line-height:1.65;margin:13px 0 0}
+    .hero-badge{border:1px solid #324d6e;border-radius:14px;background:#111f32;padding:14px 17px;flex-shrink:0;display:flex;gap:12px;align-items:center}
+    .hero-badge svg{width:26px;height:26px;color:var(--blue)}
+    .hero-badge small{display:block;color:#8ba6c6;font-weight:800;font-size:10px;letter-spacing:1.2px}
+    .hero-badge strong{display:block;color:#bde3ff;font-size:15px;margin-top:3px;letter-spacing:.7px}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:19px}
+    .stat{padding:20px 21px;background:rgba(19,28,44,.96);border:1px solid var(--line);border-radius:16px;min-width:0}
+    .stat-label{color:var(--muted);font-weight:850;font-size:10px;letter-spacing:1.3px;margin-bottom:9px}
+    .stat-value{font-size:clamp(24px,3.5vw,32px);font-weight:950;letter-spacing:-.8px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+    .stat-value.green{color:var(--green)}.stat-value.blue{color:var(--blue)}.stat-value.orange{color:var(--orange-light)}
+    .stat-hint{color:var(--subtle);font-size:11px;margin-top:5px;line-height:1.5}
+    .overview{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(285px,1fr);gap:15px;margin-bottom:25px;align-items:stretch}
+    .feature{position:relative;overflow:hidden;border:1px solid #355477;border-radius:19px;background:linear-gradient(120deg,#142945 0%,#111e32 62%,#122138 100%);padding:23px 25px;min-width:0}
+    .feature:after{content:'';position:absolute;width:270px;height:270px;border-radius:50%;border:1px solid #609ee01a;box-shadow:0 0 0 35px #609ee009,0 0 0 80px #609ee007;right:-64px;top:-130px;pointer-events:none}
+    .feature-line{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1}
+    .feature .kicker{color:#85bfff;font-size:10px;margin:0}.feature-pill{font-size:9px;font-weight:900;letter-spacing:.7px;border:1px solid #3f648c;background:#1d3857;color:#9eceff;border-radius:999px;padding:6px 9px}
+    .feature-content{display:flex;justify-content:space-between;align-items:end;gap:20px;position:relative;z-index:1;margin-top:13px}
+    .feature-name{font-weight:850;font-size:clamp(17px,2.1vw,23px);letter-spacing:-.4px;line-height:1.3;margin:0;max-width:460px}
+    .feature-help{font-size:11px;color:#9db1ca;margin:8px 0 0;line-height:1.5}
+    .feature-timer{font-variant-numeric:tabular-nums;font-size:clamp(25px,3.2vw,37px);font-weight:950;color:#a6d7ff;letter-spacing:1px;white-space:nowrap}
+    .feature.is-empty{border-color:#35574f;background:linear-gradient(115deg,#112b2c,#14222d)}
+    .feature.is-empty .feature-timer{color:#88e2c4}
+    .guide{border:1px solid var(--line);border-radius:19px;background:#141c2c;padding:22px 23px;display:flex;align-items:flex-start;gap:15px}
+    .guide-icon{width:42px;height:42px;flex-shrink:0;display:grid;place-items:center;color:var(--orange);background:#332a30;border:1px solid #64453e;border-radius:13px}
+    .guide-icon svg{width:21px;height:21px}.guide h2{font-size:15px;letter-spacing:-.1px;margin:0 0 8px}.guide p{color:var(--muted);line-height:1.65;font-size:11px;margin:0}.guide strong{color:#ffca9e}
+    .section-top{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:0 0 17px}
+    .section-top .kicker{margin-bottom:6px;font-size:10px}.section-top h2{font-size:23px;margin:0;letter-spacing:-.6px}
+    .section-top p{color:var(--muted);font-size:12px;line-height:1.5;margin:7px 0 0}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px;flex-wrap:wrap}
+    .tabs{display:flex;flex-wrap:wrap;gap:7px}
+    .tab{padding:10px 15px;border:1px solid var(--line);background:#131c2c;border-radius:10px;color:#98a8c1;font-size:11px;font-weight:850;transition:background .15s,color .15s,border-color .15s}
+    .tab:hover{color:white;border-color:#587395}.tab.active{background:#193453;color:#b4ddff;border-color:#4176aa}
+    .tab-count{margin-left:5px;opacity:.8}
+    .toolbar-right{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+    .searchbox{border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:8px;background:#121c2c;color:#8093b0;padding:0 11px;height:40px;min-width:0}
+    .searchbox svg{width:15px;height:15px;flex:none}.searchbox input{color:var(--text);background:transparent;border:0;outline:none;width:168px;min-width:60px;font-size:12px}.searchbox input::placeholder{color:#7e8da5}
+    .sortselect{height:40px;border-radius:10px;border:1px solid var(--line);background:#121c2c;color:#bfccdf;font-size:11px;font-weight:700;padding:0 10px;max-width:185px}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .store{position:relative;border:1px solid var(--line);border-radius:17px;background:linear-gradient(155deg,#172031,#111a2a);min-width:0;overflow:hidden;transition:transform .14s,border-color .15s,box-shadow .15s}
+    .store:before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:#3a4b65}
+    .store:hover{transform:translateY(-2px);border-color:#46607f;box-shadow:0 14px 28px #0000002a}
+    .store.active{border-color:#355276;background:linear-gradient(155deg,#152438,#111a2a)}
+    .store.active:before{background:linear-gradient(90deg,#397bd5,#72baff)}
+    .store.ready:before{background:linear-gradient(90deg,#3eaa87,#72f1bb)}
+    .store.ready{cursor:pointer}
+    .store.ready:hover{border-color:#438e7c;box-shadow:0 10px 34px #3fba9a14}
+    .store-inner{padding:19px 19px 17px}
+    .store-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .store-identity{display:flex;align-items:center;gap:9px;min-width:0}
+    .shop-icon{height:35px;width:35px;flex:none;display:grid;place-items:center;background:#223149;border:1px solid #30455f;color:#8cafdb;border-radius:10px}
+    .shop-icon svg{height:18px;width:18px}.store.ready .shop-icon{background:#173a33;border-color:#315c4e;color:#85e9c1}
+    .store-index{font-weight:900;color:#8899b3;font-size:10px;letter-spacing:1.2px}
+    .status{display:flex;align-items:center;gap:5px;white-space:nowrap;border-radius:50px;border:1px solid #36547a;color:#95c9ff;background:#1a334f;padding:7px 9px;font-size:9px;font-weight:900;letter-spacing:.2px}
+    .status i{width:6px;height:6px;border-radius:50%;background:#69b5ff;box-shadow:0 0 8px #63b4ff77}
+    .store.ready .status{color:#8ee7c3;border-color:#2e6757;background:#16372f}.store.ready .status i{background:#5eddb3;box-shadow:0 0 8px #61ddb385}
+    .store-name{min-height:43px;margin:18px 0 12px;font-size:15px;line-height:1.36;font-weight:850;letter-spacing:-.2px;overflow-wrap:anywhere}
+    .count-label{font-size:10px;color:#8394af;letter-spacing:1.3px;font-weight:900;margin-bottom:5px}
+    .count{font-size:clamp(29px,3vw,37px);font-weight:950;line-height:1.15;color:#b1ddff;letter-spacing:.5px;font-variant-numeric:tabular-nums}
+    .store.ready .count{color:#82e7c3;letter-spacing:-.7px;font-size:29px;margin:4px 0 2px}
+    .progress{width:100%;height:6px;border-radius:99px;background:#29364b;margin:17px 0 10px;overflow:hidden}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,#347cdb,#67bcff);border-radius:99px;transition:width .3s linear}
+    .store.ready .progress-fill{background:var(--green)}
+    .times{min-height:16px;color:#8396b0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:3px;font-size:10px;line-height:1.5}
+    .times strong{color:#b7c9e2;font-weight:800}.store.ready .times strong{color:#91dabf}
+    .store-actions{display:flex;gap:8px;margin-top:17px}
+    .main-btn{width:100%;min-height:42px;border:0;border-radius:10px;background:linear-gradient(110deg,#ffb785,#fb826b);font-weight:900;color:#171622;letter-spacing:.5px;font-size:11px;transition:filter .15s,transform .15s}
+    .main-btn:hover{filter:brightness(1.07)}.main-btn:active{transform:scale(.99)}
+    .wait-btn{flex:1;min-height:42px;border:1px solid #355172;border-radius:10px;background:#1a2b43;color:#a6d5ff;font-size:10px;font-weight:850;letter-spacing:.5px;cursor:default}
+    .cancel-btn{border:1px solid #58404e;background:#291e2b;color:#ed9ca7;border-radius:10px;padding:0 13px;font-size:11px;font-weight:900;min-width:42px}
+    .cancel-btn:hover{background:#462837}
+    .empty-list{text-align:center;border:1px dashed #344258;color:#93a2b8;padding:60px 15px;border-radius:16px;font-size:13px;grid-column:1/-1}
+    .empty-list strong{display:block;color:var(--text);font-size:16px;margin-bottom:8px}
+    .management{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:22px;border:1px solid var(--line);background:#131c2b;border-radius:16px;padding:19px 21px;flex-wrap:wrap}
+    .management h2{font-size:14px;margin:0 0 4px}.management p{font-size:11px;color:var(--muted);line-height:1.55;margin:0}
+    .management-buttons{display:flex;flex-wrap:wrap;gap:9px}
+    .outline-btn{color:#c0d1ea;border:1px solid #3c4c65;background:#1a2739;border-radius:10px;padding:11px 13px;font-size:10px;font-weight:850;letter-spacing:.2px}
+    .outline-btn:hover{background:#23354e}.outline-btn.danger{color:#efa0aa;background:#281d29;border-color:#67404a}.outline-btn.danger:hover{background:#442834}
+    footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid #263348;margin-top:25px;padding-top:21px;color:var(--subtle);font-size:11px;line-height:1.5}
+    footer b{color:var(--orange)}
+    .toast{position:fixed;bottom:21px;left:50%;transform:translate(-50%,17px);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;background:#1b3553;border:1px solid #4c83b8;color:#d6edff;border-radius:12px;padding:13px 17px;box-shadow:0 12px 38px #0008;font-size:12px;font-weight:750;text-align:center;max-width:min(90vw,530px)}
+    .toast.show{opacity:1;transform:translate(-50%,0)}.toast.error{background:#43232c;border-color:#925465;color:#ffd1d6}
+    .dialog-backdrop{position:fixed;inset:0;background:#050810c9;z-index:30;display:grid;place-items:center;padding:18px;backdrop-filter:blur(4px)}
+    .dialog{max-width:420px;width:100%;border:1px solid #495873;border-radius:18px;background:linear-gradient(155deg,#1b283e,#111a29);box-shadow:0 20px 90px #000b;padding:25px}
+    .dialog .kicker{margin-bottom:7px}.dialog h2{margin:0;font-size:22px}.dialog p{font-size:12px;line-height:1.7;color:#b1c0d5;margin:13px 0 21px}
+    .dialog-buttons{display:flex;gap:10px;justify-content:flex-end}
+    .dialog-buttons button{padding:12px 16px;border-radius:10px;font-size:11px;font-weight:850}
+    .dialog-no{border:1px solid #4a5970;color:#d3ddec;background:#263146}.dialog-yes{border:0;background:#ef8d97;color:#261018}
+    @media(max-width:1060px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview{grid-template-columns:1fr}.guide{align-items:center}}
+    @media(max-width:690px){.wrap{width:calc(100% - 22px);padding-top:18px}.topline{margin-bottom:24px}.brand{letter-spacing:.8px;font-size:10px}.brand-mark{width:36px;height:36px}.top-meta .clock-pill{display:none}.hero{flex-direction:column;align-items:flex-start;gap:15px}.hero-badge{padding:11px 14px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:15px}.stat-label{font-size:9px}.stat-value{font-size:27px}.feature{padding:20px 17px}.feature-content{align-items:flex-start;flex-direction:column;gap:10px}.feature-timer{font-size:32px}.guide{padding:17px}.toolbar{align-items:stretch}.tabs{width:100%}.tab{flex:1;padding:10px 7px}.toolbar-right{width:100%}.searchbox{flex:1}.searchbox input{width:100%}.sortselect{flex:0 0 40%;max-width:none}.grid{grid-template-columns:1fr}.store-inner{padding:18px}.store-name{min-height:0}.section-top h2{font-size:21px}.management{padding:17px}.management-buttons{width:100%}.management-buttons button{flex:1}footer{font-size:10px}}
+    @media(min-width:550px) and (max-width:690px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.store-name{min-height:43px}}
+    @media(max-width:370px){.pill{padding:8px;font-size:9px}.searchbox input{min-width:42px}.sortselect{font-size:10px}.tab{font-size:10px}.count{font-size:30px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="topline" aria-label="Identificare aplicație">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M3 9v11h18V9M3 9h18"/><path d="M9 9v3a3 3 0 0 1-6 0M15 9v3a3 3 0 0 1-6 0M21 9v3a3 3 0 0 1-6 0M9 20v-6h6v6"/></svg></span><span>FIVEM <span class="brand-accent">/</span> RP TOOLS</span></div>
+      <div class="top-meta"><span class="pill clock-pill" id="localClock">--:--:--</span><span class="pill"><span class="live-dot"></span>SALVARE AUTOMATĂ</span></div>
+    </nav>
+
+    <header class="hero">
+      <div><p class="eyebrow">STORE HEIST / COOLDOWN TRACKER</p><h1>COOLDOWN <span>MAGAZINE</span></h1><p class="hero-description">Monitorizează cele 14 magazine din FiveM. Apasă pe un magazin disponibil și pornește automat cronometrul de <strong style="color:#ffe0c7">3 ore</strong>. Timpul rămâne salvat chiar dacă închizi pagina.</p></div>
+      <div class="hero-badge" aria-label="Durata cooldownului"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><small>COOLDOWN FIX</small><strong>03:00:00</strong></div></div>
+    </header>
+
+    <section class="stats" aria-label="Statistici magazine">
+      <div class="stat"><div class="stat-label">TOTAL MAGAZINE</div><div class="stat-value">14</div><div class="stat-hint">Locații monitorizate</div></div>
+      <div class="stat"><div class="stat-label">DISPONIBILE ACUM</div><div class="stat-value green" id="readyStat">14</div><div class="stat-hint">Pregătite pentru un nou jaf</div></div>
+      <div class="stat"><div class="stat-label">ÎN COOLDOWN</div><div class="stat-value blue" id="activeStat">0</div><div class="stat-hint">Cronometre active</div></div>
+      <div class="stat"><div class="stat-label">PORNITE ASTĂZI</div><div class="stat-value orange" id="todayStat">0</div><div class="stat-hint">Magazine activate azi</div></div>
+    </section>
+
+    <section class="overview" aria-label="Următorul magazin disponibil">
+      <div class="feature is-empty" id="nextFeature">
+        <div class="feature-line"><p class="kicker">◷ URMĂTORUL MAGAZIN DISPONIBIL</p><span class="feature-pill" id="nextBadge">FĂRĂ COOLDOWN</span></div>
+        <div class="feature-content"><div><p class="feature-name" id="nextName">Toate magazinele sunt disponibile</p><p class="feature-help" id="nextHelp">Pornește un cooldown din lista de mai jos.</p></div><div class="feature-timer" id="nextTimer">--:--:--</div></div>
+      </div>
+      <aside class="guide"><div class="guide-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7h.01"/></svg></div><div><h2>Cum funcționează?</h2><p><strong>Apasă pe un magazin verde</strong> pentru a începe CD-ul. Cronometrul devine albastru, scade în timp real și revine automat la <strong>DISPONIBIL</strong> după 3 ore.</p></div></aside>
+    </section>
+
+    <main>
+      <div class="section-top"><div><p class="kicker">01 / MANAGEMENT MAGAZINE</p><h2>Lista magazinelor</h2><p>Selectează orice magazin disponibil pentru a începe cele 3 ore de cooldown.</p></div></div>
+      <div class="toolbar">
+        <div class="tabs" role="group" aria-label="Filtrează magazinele">
+          <button type="button" class="tab active" data-filter="all" aria-pressed="true">TOATE <span class="tab-count" id="allCount">14</span></button>
+          <button type="button" class="tab" data-filter="ready" aria-pressed="false">DISPONIBILE <span class="tab-count" id="readyCount">14</span></button>
+          <button type="button" class="tab" data-filter="active" aria-pressed="false">ÎN COOLDOWN <span class="tab-count" id="activeCount">0</span></button>
+        </div>
+        <div class="toolbar-right">
+          <label class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="search" type="search" placeholder="Caută magazin..." autocomplete="off" aria-label="Caută magazin după nume"></label>
+          <select class="sortselect" id="sort" aria-label="Ordonează magazinele"><option value="default">ORDINE STANDARD</option><option value="next">CD CEL MAI MIC</option><option value="name">NUME A–Z</option></select>
+        </div>
+      </div>
+      <section id="storeGrid" class="grid" aria-label="Magazin și cronometru"></section>
+      <div class="management">
+        <div><h2>Administrare cronometre</h2><p>Poți salva un backup, îl poți restaura sau poți reseta toate cronometrele.</p></div>
+        <div class="management-buttons"><button class="outline-btn" type="button" id="exportBtn">↓ EXPORTĂ BACKUP</button><button class="outline-btn" type="button" id="importBtn">↑ IMPORTĂ</button><button class="outline-btn danger" type="button" id="resetAllBtn">RESETEAZĂ TOT</button></div>
+        <input type="file" id="importFile" accept=".json,application/json" hidden aria-label="Încarcă backup cooldown">
+      </div>
+    </main>
+    <footer><span><b>FIVEM / RP TOOLS</b> • Tracker cooldown jaf magazine</span><span>Datele se salvează local în acest browser • Nu necesită internet</span></footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="dialog-backdrop" id="confirmBackdrop" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialogTitle" aria-describedby="dialogDesc">
+      <p class="kicker">CONFIRMARE ACȚIUNE</p><h2 id="dialogTitle">Resetezi cooldown-ul?</h2><p id="dialogDesc">Această acțiune va șterge cronometrul selectat.</p>
+      <div class="dialog-buttons"><button class="dialog-no" type="button" id="cancelConfirm">ANULEAZĂ</button><button class="dialog-yes" type="button" id="acceptConfirm">CONFIRMĂ</button></div>
+    </div>
+  </div>
+  <script>
+    'use strict';
+    // Cooldown de 3 ore pentru fiecare magazin. Se calculează pe baza orei absolute,
+    // nu a numărului de secunde petrecute cu pagina deschisă.
+    const DURATION = 3 * 60 * 60 * 1000;
+    const STORAGE_KEY = 'fivem-rp-tools-store-cooldowns-v1';
+    const SHOPS = [
+      ['paleto','MAGAZIN PALETO (CURBA PERICULOASA)'],
+      ['carduri','MAGAZIN CARDURI'],
+      ['amanet','MAGAZIN AMANET'],
+      ['cnn-vechi','MAGAZIN CNN VECHI'],
+      ['sectia-politie','MAGAZIN SECTIA DE POLITIE'],
+      ['groove','MAGAZIN GROOVE'],
+      ['apa-mirror','MAGAZIN APA MIRROR'],
+      ['benzinarie-mirror','MAGAZIN BENZINARIE MIRROR'],
+      ['grapeseed','MAGAZIN GRAPESEED'],
+      ['dedeman','MAGAZIN DEDEMAN'],
+      ['pacific','MAGAZIN PACIFIC'],
+      ['dusty','MAGAZIN DUSTY'],
+      ['diicot','MAGAZIN DIICOT'],
+      ['highway','MAGAZIN HIGHWAY']
+    ].map(([id,name],index)=>({id,name,index}));
+    const SHOP_IDS = new Set(SHOPS.map(s=>s.id));
+    const el = id => document.getElementById(id);
+    const state = {timers:{},filter:'all',query:'',sort:'default',storageAvailable:true};
+    const timeFmt = new Intl.DateTimeFormat('ro-RO',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const clockFmt = new Intl.DateTimeFormat('ro-RO',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    let toastTimeout = null;
+    let pendingConfirm = null;
+    let lastFocus = null;
+    let previousActiveIds = new Set();
+
+    function safeLoad() {
+      try {
+        const text = localStorage.getItem(STORAGE_KEY);
+        if (text) {
+          const obj = JSON.parse(text);
+          state.timers = validateTimers(obj.timers || {});
+        }
+      } catch (err) {
+        state.storageAvailable = false;
+        console.warn('Datele salvate nu au putut fi citite:', err);
+      }
+    }
+    function validateTimers(raw) {
+      const valid = {};
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return valid;
+      for (const id of SHOP_IDS) {
+        const t = raw[id];
+        if (!t || typeof t !== 'object') continue;
+        const startedAt = Number(t.startedAt), endAt = Number(t.endAt);
+        // Data sursă trebuie să reprezinte un CD normal de exact 3 ore.
+        if (Number.isSafeInteger(startedAt) && Number.isSafeInteger(endAt) && endAt-startedAt === DURATION && startedAt > 0 && startedAt < 4102444800000) {
+          valid[id]={startedAt,endAt};
+        }
+      }
+      return valid;
+    }
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY,JSON.stringify({version:1,timers:state.timers}));state.storageAvailable=true; }
+      catch (err) {state.storageAvailable=false;notify('Browserul nu permite salvarea locală. Poți exporta un backup.',true);}
+    }
+    const remaining = (id, now=Date.now()) => Math.max(0,(state.timers[id]?.endAt || 0)-now);
+    const isActive = (id, now=Date.now()) => remaining(id,now)>0;
+    const pad=n=>String(n).padStart(2,'0');
+    function countdown(ms) {let seconds=Math.max(0,Math.ceil(ms/1000));return `${pad(Math.floor(seconds/3600))}:${pad(Math.floor(seconds%3600/60))}:${pad(seconds%60)}`;}
+    function dayTag(date, now=Date.now()) {
+      const current = new Date(now), other = new Date(date);
+      const a = new Date(current.getFullYear(),current.getMonth(),current.getDate()).getTime();
+      const b = new Date(other.getFullYear(),other.getMonth(),other.getDate()).getTime();
+      const days = Math.round((b-a)/86400000);
+      if (days===0) return 'AZI';
+      if (days===1) return 'MÂINE';
+      if (days===-1) return 'IERI';
+      return other.toLocaleDateString('ro-RO',{day:'2-digit',month:'short'}).toUpperCase();
+    }
+    function notify(text,isError=false) {
+      const toast=el('toast');toast.textContent=text;toast.classList.toggle('error',isError);toast.classList.add('show');
+      clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>toast.classList.remove('show'),3600);
+    }
+    function escapeHTML(str) {return String(str).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    const STORE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10V21h18V10M3 10l2-6h14l2 6"/><path d="M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M9 21v-7h6v7"/></svg>';
+    function startTimer(id) {
+      if(!SHOP_IDS.has(id) || isActive(id)) return;
+      const now=Date.now();state.timers[id]={startedAt:now,endAt:now+DURATION};save();renderCards();updateLive();
+      notify(`${SHOPS.find(x=>x.id===id).name}: cooldown pornit pentru 3 ore.`);
+    }
+    function confirmAction(title,description,onYes) {
+      pendingConfirm=onYes;lastFocus=document.activeElement;
+      el('dialogTitle').textContent=title;el('dialogDesc').textContent=description;
+      el('confirmBackdrop').hidden=false;el('cancelConfirm').focus();
+    }
+    function closeConfirm() {pendingConfirm=null;el('confirmBackdrop').hidden=true;if(lastFocus?.isConnected)lastFocus.focus();}
+    function resetTimer(id) {
+      const shop=SHOPS.find(s=>s.id===id);if(!shop)return;
+      confirmAction('Resetezi acest magazin?',`${shop.name} va deveni imediat disponibil. Cronometrul pornit va fi șters.`,()=>{
+        delete state.timers[id];save();renderCards();updateLive();notify(`${shop.name} este disponibil din nou.`);
+      });
+    }
+    function renderCards() {
+      const now=Date.now();
+      let shown=SHOPS.filter(s=>(state.filter==='all'||(state.filter==='active'?isActive(s.id,now):!isActive(s.id,now)))&&s.name.toLocaleLowerCase('ro-RO').includes(state.query));
+      if(state.sort==='name')shown.sort((a,b)=>a.name.localeCompare(b.name,'ro'));
+      if(state.sort==='next')shown.sort((a,b)=>{
+        const diff=remaining(a.id,now)-remaining(b.id,now);
+        return diff || a.index-b.index;
+      });
+      el('storeGrid').innerHTML=shown.length?shown.map(shop=>{
+        const t=state.timers[shop.id],ms=remaining(shop.id,now),active=ms>0;
+        const started=t?.startedAt;
+        const end=t?.endAt;
+        const timing=active?`<span>START: <strong>${timeFmt.format(new Date(started))}</strong></span><span>LIBER: <strong>${dayTag(end,now)} ${timeFmt.format(new Date(end))}</strong></span>`:
+          (t ? '<span><strong>COOLDOWN ÎNCHEIAT</strong></span><span>POȚI PORNI DIN NOU</span>':'<span>NICIUN COOLDOWN ACTIV</span><span>GATA DE JAF</span>');
+        const progress=active?Math.max(0,Math.min(100,(DURATION-ms)/DURATION*100)):100;
+        return `<article class="store ${active?'active':'ready'}" data-shop="${shop.id}" ${active?'':'tabindex="0" role="button" aria-label="Pornește cooldown pentru '+escapeHTML(shop.name)+'"'}>
+          <div class="store-inner">
+            <div class="store-top"><div class="store-identity"><span class="shop-icon">${STORE_SVG}</span><span class="store-index">MAGAZIN #${pad(shop.index+1)}</span></div><span class="status"><i></i>${active?'ÎN COOLDOWN':'DISPONIBIL'}</span></div>
+            <h3 class="store-name">${escapeHTML(shop.name)}</h3>
+            <div class="count-label">${active?'TIMP RĂMAS':'STATUS MAGAZIN'}</div>
+            <div class="count" data-time="${shop.id}">${active?countdown(ms):'DISPONIBIL'}</div>
+            <div class="progress"><div class="progress-fill" data-progress="${shop.id}" style="width:${progress}%"></div></div>
+            <div class="times" data-times="${shop.id}">${timing}</div>
+            <div class="store-actions">${active?`<button class="wait-btn" type="button" disabled>◷ CD ÎN DESFĂȘURARE</button><button class="cancel-btn" type="button" data-reset="${shop.id}" aria-label="Resetează cooldown ${escapeHTML(shop.name)}" title="Resetează doar acest magazin">↺</button>`:
+            `<button class="main-btn" type="button" data-start="${shop.id}">◷ PORNEȘTE COOLDOWN 3H</button>`}</div>
+          </div></article>`;
+      }).join(''):'<div class="empty-list"><strong>Niciun magazin găsit</strong>Încearcă altă căutare sau selectează un alt filtru.</div>';
+      previousActiveIds=new Set(SHOPS.filter(s=>isActive(s.id,now)).map(s=>s.id));
+      updateLive();
+    }
+    function updateLive() {
+      const now=Date.now();
+      const active=SHOPS.filter(s=>isActive(s.id,now));
+      const currentActiveSet=new Set(active.map(s=>s.id));
+      let stateChanged=currentActiveSet.size!==previousActiveIds.size;
+      if(!stateChanged)for(const id of previousActiveIds)if(!currentActiveSet.has(id)){stateChanged=true;break;}
+      if(stateChanged){renderCards();return;}
+      el('readyStat').textContent=SHOPS.length-active.length;
+      el('activeStat').textContent=active.length;
+      el('allCount').textContent=SHOPS.length;
+      el('readyCount').textContent=SHOPS.length-active.length;
+      el('activeCount').textContent=active.length;
+      const today=new Date(now);
+      el('todayStat').textContent=SHOPS.filter(s=>{const t=state.timers[s.id];if(!t)return false;const d=new Date(t.startedAt);return d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();}).length;
+      el('localClock').textContent=clockFmt.format(new Date(now));
+      const feature=el('nextFeature');
+      if(active.length){active.sort((a,b)=>state.timers[a.id].endAt-state.timers[b.id].endAt);
+        const next=active[0],end=state.timers[next.id].endAt;
+        feature.classList.remove('is-empty');el('nextBadge').textContent='CEL MAI APROPIAT CD';el('nextName').textContent=next.name;
+        el('nextHelp').textContent=`Disponibil ${dayTag(end,now).toLowerCase('ro-RO')} la ${timeFmt.format(new Date(end))}`;
+        el('nextTimer').textContent=countdown(remaining(next.id,now));
+      }else{feature.classList.add('is-empty');el('nextBadge').textContent='FĂRĂ COOLDOWN';
+        el('nextName').textContent='Toate magazinele sunt disponibile';el('nextHelp').textContent='Pornește un cooldown din lista de mai jos.';el('nextTimer').textContent='--:--:--';}
+      for(const shop of SHOPS){
+        const count=el('storeGrid').querySelector(`[data-time="${shop.id}"]`);
+        if(!count)continue;
+        const ms=remaining(shop.id,now),t=state.timers[shop.id];
+        count.textContent=ms>0?countdown(ms):'DISPONIBIL';
+        const progress=el('storeGrid').querySelector(`[data-progress="${shop.id}"]`);
+        if(progress)progress.style.width=`${ms>0?Math.max(0,Math.min(100,(DURATION-ms)/DURATION*100)):100}%`;
+        if(ms>0&&t){const times=el('storeGrid').querySelector(`[data-times="${shop.id}"]`);
+          if(times)times.innerHTML=`<span>START: <strong>${timeFmt.format(new Date(t.startedAt))}</strong></span><span>LIBER: <strong>${dayTag(t.endAt,now)} ${timeFmt.format(new Date(t.endAt))}</strong></span>`;}
+      }
+    }
+    function setFilter(filter) {
+      state.filter=filter;
+      for(const b of document.querySelectorAll('[data-filter]')){const selected=b.dataset.filter===filter;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected));}
+      renderCards();
+    }
+    function exportBackup() {
+      const data=JSON.stringify({app:'FiveM Cooldown Magazine',version:1,exportedAt:new Date().toISOString(),timers:state.timers},null,2);
+      const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+      const a=document.createElement('a');a.href=url;a.download=`backup-cooldown-magazine-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Backup descărcat. Păstrează fișierul pentru restaurare.');
+    }
+    async function importBackup(file) {
+      if(!file)return;
+      try {
+        if(file.size>1000000)throw Error('Fișierul este prea mare.');
+        const raw=JSON.parse(await file.text());
+        if(raw.app!=='FiveM Cooldown Magazine'||raw.version!==1||!raw.timers||typeof raw.timers!=='object'||Array.isArray(raw.timers))throw Error('Fișierul nu este un backup valid al aplicației.');
+        const timers=validateTimers(raw.timers);
+        confirmAction('Restaurezi backup-ul?','Cronometrele actuale vor fi înlocuite cu cele din fișierul ales. Datele din fișier păstrează orele originale de expirare.',()=>{
+          state.timers=timers;save();renderCards();updateLive();notify('Backup restaurat cu succes.');
+        });
+      } catch(e){notify(e.message||'Nu am putut citi acest backup.',true);}
+      finally {el('importFile').value='';}
+    }
+    el('storeGrid').addEventListener('click',event=>{
+      const reset=event.target.closest('[data-reset]');
+      if(reset){event.stopPropagation();resetTimer(reset.dataset.reset);return;}
+      const start=event.target.closest('[data-start]');
+      if(start){event.stopPropagation();startTimer(start.dataset.start);return;}
+      const card=event.target.closest('.store.ready');
+      if(card)startTimer(card.dataset.shop);
+    });
+    el('storeGrid').addEventListener('keydown',event=>{
+      if(event.target.matches('.store.ready')&&(event.key==='Enter'||event.key===' ')){
+        event.preventDefault();startTimer(event.target.dataset.shop);
+      }
+    });
+    document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>setFilter(btn.dataset.filter)));
+    el('search').addEventListener('input',e=>{state.query=e.target.value.toLocaleLowerCase('ro-RO').trim();renderCards();});
+    el('sort').addEventListener('change',e=>{state.sort=e.target.value;renderCards();});
+    el('exportBtn').addEventListener('click',exportBackup);
+    el('importBtn').addEventListener('click',()=>el('importFile').click());
+    el('importFile').addEventListener('change',e=>importBackup(e.target.files[0]));
+    el('resetAllBtn').addEventListener('click',()=>confirmAction('Resetezi TOATE magazinele?','Vei șterge toate cooldown-urile și toate cele 14 magazine vor deveni disponibile. Poți exporta un backup înainte.',()=>{
+      state.timers={};save();renderCards();updateLive();notify('Toate magazinele au fost resetate.');
+    }));
+    el('cancelConfirm').addEventListener('click',closeConfirm);
+    el('acceptConfirm').addEventListener('click',()=>{const action=pendingConfirm;closeConfirm();if(action)action();});
+    el('confirmBackdrop').addEventListener('click',e=>{if(e.target===el('confirmBackdrop'))closeConfirm();});
+    document.addEventListener('keydown',e=>{
+      if(el('confirmBackdrop').hidden)return;
+      if(e.key==='Escape')closeConfirm();
+      if(e.key==='Tab'){const focusables=[el('cancelConfirm'),el('acceptConfirm')];const index=focusables.indexOf(document.activeElement);
+        if(e.shiftKey&&index===0){e.preventDefault();focusables[1].focus();}
+        if(!e.shiftKey&&index===1){e.preventDefault();focusables[0].focus();}
+      }
+    });
+    window.addEventListener('storage',e=>{if(e.key===STORAGE_KEY){safeLoad();renderCards();updateLive();notify('Datele au fost actualizate dintr-o altă filă.');}});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateLive();});
+    safeLoad();renderCards();
+    if(!state.storageAvailable)notify('Atenție: salvarea locală este blocată în acest browser.',true);
+    setInterval(updateLive,1000);
+  </script>
+</body>
+</html>
