@@ -27,8 +27,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-const SUPABASE_URL='PASTE_YOUR_SUPABASE_PROJECT_URL_HERE';
-const SUPABASE_PUBLISHABLE_KEY='PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE';
+const SUPABASE_URL='https://supabase.com/dashboard/project/gmugkgileimisdtmlfxa';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_OXoza1kSNNzNKNVbgS2rpg_2Q4-vhme';
 const configured=!SUPABASE_URL.includes('PASTE_')&&!SUPABASE_PUBLISHABLE_KEY.includes('PASTE_')&&window.supabase;
 const sb=configured?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY):null;
 const $=id=>document.getElementById(id);let mode='login';
