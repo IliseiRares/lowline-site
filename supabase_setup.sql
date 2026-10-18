@@ -60,7 +60,7 @@ on conflict (id) do update set email = excluded.email;
 
 update public.profiles
 set is_admin = true, can_start = true, can_reset = true, can_edit = true, updated_at = now()
-where id = 'PASTE_INITIAL_ADMIN_UUID_HERE'::uuid;
+where id = 'd7337ba0-88db-4c69-8378-6af13ed60b46'::uuid;
 
 create or replace function public.is_site_admin()
 returns boolean
