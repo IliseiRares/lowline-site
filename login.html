@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090d17">
+<title>Autentificare • FiveM RP Tools</title>
+<style>
+:root{--bg:#090d17;--panel:#131c2b;--line:#2a364b;--text:#f3f6ff;--muted:#98a7bd;--orange:#ff986f;--green:#61ddb3;--red:#fa8b91}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse 760px 410px at 6% -3%,rgba(35,102,211,.17),transparent 75%),radial-gradient(ellipse 740px 490px at 100% 10%,rgba(247,118,80,.095),transparent 75%),var(--bg);color:var(--text);font-family:Segoe UI,Inter,system-ui,sans-serif}.card{width:min(100%,480px);border:1px solid var(--line);background:rgba(19,28,43,.97);border-radius:20px;padding:clamp(22px,5vw,34px);box-shadow:0 24px 80px #0005}.brand{font-size:11px;font-weight:900;letter-spacing:2px;margin-bottom:28px}.brand span,h1 span{color:var(--orange)}.eyebrow{color:var(--orange);font-size:10px;font-weight:900;letter-spacing:2.4px;margin:0 0 9px}h1{font-size:32px;letter-spacing:-1px;margin:0 0 10px}.desc{color:var(--muted);font-size:12px;line-height:1.7;margin:0 0 22px}.field{display:block;margin:0 0 12px}.field span{display:block;color:#a8b8ce;font-size:11px;font-weight:750;margin:0 0 7px}.field input{width:100%;background:#0d1523;color:var(--text);border:1px solid #3c4c65;border-radius:10px;padding:13px;font-size:13px}.btn{width:100%;border:0;border-radius:10px;padding:13px;background:linear-gradient(110deg,#ffb785,#fb826b);color:#171622;font-weight:900;font-size:11px;letter-spacing:.5px;cursor:pointer;margin-top:5px}.btn:disabled{opacity:.5;cursor:wait}.links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}.link{background:none;border:0;color:#a8d8ff;text-decoration:underline;font-size:11px;cursor:pointer;padding:4px 0}.status{font-size:12px;line-height:1.6;color:var(--green);margin-top:14px}.status.error{color:var(--red)}.back{display:inline-block;color:#a8d8ff;font-size:11px;margin-top:24px;text-decoration:none}.notice{border:1px solid #344258;border-radius:11px;padding:12px;color:var(--muted);font-size:11px;line-height:1.6;margin-top:18px}[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">FIVEM <span>/</span> RP TOOLS</div>
+  <p class="eyebrow">CONT PERSONAL / SECURE ACCESS</p>
+  <h1 id="heading">Autentificare</h1>
+  <p class="desc">Conectează-te pentru a folosi permisiunile acordate de administrator. Fără autentificare, cronometrele rămân vizibile în modul doar-citire.</p>
+  <form id="form">
+    <label class="field"><span>EMAIL</span><input id="email" type="email" autocomplete="username" placeholder="nume@exemplu.ro" required></label>
+    <label class="field"><span>PAROLĂ</span><input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="Minimum 8 caractere" required></label>
+    <button class="btn" id="submit" type="submit">AUTENTIFICARE</button>
+  </form>
+  <div class="links"><button class="link" id="toggle">Nu ai cont? Creează unul</button><button class="link" id="forgot">Am uitat parola</button></div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <div class="notice">Conturile noi primesc implicit doar acces de vizualizare. Administratorul poate acorda separat acces la pornirea, resetarea sau editarea timpului.</div>
+  <a class="back" href="index.html">← Înapoi la cronometre</a>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+'use strict';
+const SUPABASE_URL='PASTE_YOUR_SUPABASE_PROJECT_URL_HERE';
+const SUPABASE_PUBLISHABLE_KEY='PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE';
+const configured=!SUPABASE_URL.includes('PASTE_')&&!SUPABASE_PUBLISHABLE_KEY.includes('PASTE_')&&window.supabase;
+const sb=configured?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY):null;
+const $=id=>document.getElementById(id);let mode='login';
+function status(msg,error=false){$('status').textContent=msg;$('status').classList.toggle('error',error)}
+function setMode(m){mode=m;$('heading').textContent=m==='signup'?'Creează cont':'Autentificare';$('submit').textContent=m==='signup'?'CREEAZĂ CONT':'AUTENTIFICARE';$('toggle').textContent=m==='signup'?'Ai deja cont? Autentifică-te':'Nu ai cont? Creează unul';$('forgot').hidden=m==='signup';$('password').autocomplete=m==='signup'?'new-password':'current-password'}
+$('toggle').addEventListener('click',()=>setMode(mode==='login'?'signup':'login'));
+$('forgot').addEventListener('click',async()=>{if(!sb){status('Completează URL-ul și cheia Supabase în login.html.',true);return}const email=$('email').value.trim();if(!email){status('Introdu emailul mai întâi.',true);return}const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.href});status(error?'Eroare: '+error.message:'Dacă emailul există, vei primi un link de resetare.',!!error)});
+$('form').addEventListener('submit',async e=>{e.preventDefault();if(!sb){status('Completează SUPABASE_URL și SUPABASE_PUBLISHABLE_KEY în login.html.',true);return}$('submit').disabled=true;const email=$('email').value.trim(),password=$('password').value;let result;if(mode==='signup')result=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.href}});else result=await sb.auth.signInWithPassword({email,password});$('submit').disabled=false;if(result.error){status((mode==='signup'?'Crearea contului a eșuat: ':'Autentificarea a eșuat: ')+result.error.message,true);return}if(mode==='signup'&&!result.data.session){status('Cont creat. Verifică emailul pentru confirmare, apoi autentifică-te.');setMode('login');$('password').value='';return}status('Autentificare reușită. Se deschide site-ul…');location.href='index.html'});
+(async()=>{if(!configured){status('Configurează URL-ul și cheia Supabase în login.html.',true);return}const {data}=await sb.auth.getSession();if(data.session)location.href='index.html'})();
+</script>
+</body></html>

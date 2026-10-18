@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090d17">
+<title>Administrare utilizatori • FiveM RP Tools</title>
+<style>
+:root{--bg:#090d17;--panel:#131c2b;--line:#2a364b;--text:#f3f6ff;--muted:#98a7bd;--orange:#ff986f;--blue:#54adff;--green:#61ddb3;--red:#fa8b91}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 760px 410px at 6% -3%,rgba(35,102,211,.17),transparent 75%),radial-gradient(ellipse 740px 490px at 100% 10%,rgba(247,118,80,.095),transparent 75%),var(--bg);color:var(--text);font-family:Segoe UI,Inter,system-ui,sans-serif}
+.wrap{max-width:1200px;width:calc(100% - 32px);margin:auto;padding:28px 0 48px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:32px}.brand{font-size:12px;font-weight:900;letter-spacing:2px}.brand span{color:var(--orange)}a{color:#a8d8ff}.btn{border:1px solid #3c4c65;background:#1a2739;color:#c0d1ea;border-radius:10px;padding:11px 14px;font-size:11px;font-weight:850;text-decoration:none;cursor:pointer}.btn:hover{background:#23354e}.btn.primary{background:linear-gradient(110deg,#ffb785,#fb826b);border:0;color:#171622}.btn:disabled{opacity:.5;cursor:wait}.eyebrow{color:var(--orange);font-size:10px;font-weight:900;letter-spacing:2.5px;margin:0 0 9px}h1{font-size:clamp(30px,4vw,46px);letter-spacing:-1.5px;margin:0}h1 span{color:var(--orange)}.intro{color:var(--muted);font-size:13px;line-height:1.7;max-width:760px;margin:12px 0 24px}.panel{border:1px solid var(--line);background:rgba(19,28,43,.97);border-radius:16px;padding:20px;margin:18px 0}.panel h2{font-size:16px;margin:0 0 7px}.muted{color:var(--muted);font-size:12px;line-height:1.65}.status{margin-top:12px;font-size:12px;color:var(--green);line-height:1.6}.status.error{color:var(--red)}.login{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;max-width:760px;margin-top:16px}.login input,.search{background:#0d1523;color:var(--text);border:1px solid #3c4c65;border-radius:9px;padding:12px;font-size:12px;min-width:0}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:820px;font-size:12px}th,td{text-align:left;padding:14px 12px;border-bottom:1px solid #263348}th{color:#8fa2bd;font-size:10px;letter-spacing:1px}td:first-child{font-weight:750}.sub{display:block;color:#8394af;font-size:10px;margin-top:5px;font-weight:400}.perm{white-space:nowrap}.perm input{width:17px;height:17px;accent-color:#61ddb3;vertical-align:middle}.role{color:#ffbc91;font-weight:850}.viewer{color:#98a7bd}.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin:15px 0}.toolbar .search{width:min(100%,330px)}.empty{padding:35px;text-align:center;color:var(--muted);border:1px dashed #344258;border-radius:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.small{font-size:10px;color:var(--muted)}.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,12px);opacity:0;pointer-events:none;background:#1b3553;border:1px solid #4c83b8;color:#d6edff;border-radius:12px;padding:13px 17px;max-width:90vw;transition:.2s;font-size:12px}.toast.show{opacity:1;transform:translate(-50%,0)}.toast.error{background:#43232c;border-color:#925465;color:#ffd1d6}[hidden]{display:none!important}@media(max-width:700px){.login{grid-template-columns:1fr}.wrap{width:calc(100% - 22px);padding-top:18px}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top">
+    <div class="brand">FIVEM <span>/</span> RP TOOLS</div>
+    <div class="actions"><a class="btn" href="index.html">← ÎNAPOI LA CRONOMETRE</a><button class="btn" id="logout" hidden>IEȘIRE DIN CONT</button></div>
+  </nav>
+  <p class="eyebrow">CONTROL PANEL / ACCESS MANAGEMENT</p>
+  <h1>ADMINISTRARE <span>UTILIZATORI</span></h1>
+  <p class="intro">Vezi conturile create pe site și gestionează separat drepturile de pornire, resetare și editare a cronometrelor. Numai administratorii existenți pot deschide și salva această pagină; permisiunile sunt verificate și de Supabase.</p>
+  <section class="panel" id="loginPanel">
+    <h2>Autentificare administrator</h2>
+    <p class="muted">Conectează-te cu un cont care are rolul de administrator în baza de date.</p>
+    <form class="login" id="loginForm">
+      <input id="email" type="email" placeholder="Email" autocomplete="username" required>
+      <input id="password" type="password" placeholder="Parolă" autocomplete="current-password" required>
+      <button class="btn primary" id="loginBtn" type="submit">AUTENTIFICARE</button>
+    </form>
+    <div class="status" id="loginStatus" role="status"></div>
+  </section>
+  <section class="panel" id="usersPanel" hidden>
+    <div style="display:flex;justify-content:space-between;align-items:start;gap:14px;flex-wrap:wrap">
+      <div><h2>Utilizatori și permisiuni</h2><p class="muted">Modifică drepturile și apasă „Salvează” pentru utilizatorul respectiv. Administratorii au toate permisiunile automat.</p></div>
+      <button class="btn" id="refresh">REÎNCARCĂ LISTA</button>
+    </div>
+    <div class="toolbar"><input class="search" id="search" type="search" placeholder="Caută după email sau ID…"><span class="small" id="userCount">0 utilizatori</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>CONT</th><th>ROL ADMIN</th><th>PORNEȘTE</th><th>RESETEAZĂ</th><th>EDITEAZĂ TIMP</th><th>ACȚIUNI</th></tr></thead>
+      <tbody id="usersBody"></tbody>
+    </table></div>
+    <div class="status" id="usersStatus" role="status"></div>
+  </section>
+  <section class="panel">
+    <h2>Ce înseamnă permisiunile?</h2>
+    <p class="muted"><b>Pornește:</b> permite activarea cooldown-ului de 3 ore.<br><b>Resetează:</b> permite resetarea unui magazin sau a tuturor magazinelor.<br><b>Editează timp:</b> permite schimbarea minutelor rămase la un cronometru activ.<br><b>Rol admin:</b> acces complet și posibilitatea de a administra permisiunile celorlalți utilizatori.</p>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+'use strict';
+// Folosește aceleași date de proiect ca index.html.
+const SUPABASE_URL='PASTE_YOUR_SUPABASE_PROJECT_URL_HERE';
+const SUPABASE_PUBLISHABLE_KEY='PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE';
+const configured=!SUPABASE_URL.includes('PASTE_')&&!SUPABASE_PUBLISHABLE_KEY.includes('PASTE_')&&window.supabase;
+const sb=configured?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY):null;
+const $=id=>document.getElementById(id);
+let currentUser=null,profile=null,allUsers=[],toastTimer=null;
+function toast(message,error=false){const t=$('toast');t.textContent=message;t.classList.toggle('error',error);t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3600)}
+function setStatus(id,message,error=false){$(id).textContent=message;$(id).classList.toggle('error',error)}
+async function loadMyProfile(){
+  profile=null;
+  if(!currentUser||!sb)return;
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_start,can_reset,can_edit').eq('id',currentUser.id).maybeSingle();
+  if(error){setStatus('loginStatus','Eroare la verificarea rolului: '+error.message,true);return}
+  profile=data;
+}
+function updatePanels(){
+  const admin=!!profile?.is_admin;
+  $('loginPanel').hidden=!!currentUser&&!!profile?.is_admin;
+  $('logout').hidden=!currentUser;
+  $('usersPanel').hidden=!admin;
+  if(currentUser&&!admin)setStatus('loginStatus','Contul este autentificat, dar nu are rol de administrator. Accesul la această pagină este refuzat.',true);
+}
+function renderUsers(){
+  const q=$('search').value.trim().toLocaleLowerCase('ro-RO');
+  const list=allUsers.filter(u=>(u.email||'').toLocaleLowerCase('ro-RO').includes(q)||u.id.toLowerCase().includes(q));
+  $('userCount').textContent=`${list.length} din ${allUsers.length} utilizatori`;
+  $('usersBody').innerHTML=list.map(u=>{
+    const admin=!!u.is_admin;
+    const dis=admin?'disabled':'';
+    return `<tr data-id="${u.id}">
+      <td>${escapeHtml(u.email||'(fără email)')}<span class="sub">${u.id}</span></td>
+      <td><span class="${admin?'role':'viewer'}">${admin?'ADMINISTRATOR':'UTILIZATOR'}</span></td>
+      <td class="perm"><input type="checkbox" data-perm="can_start" aria-label="Poate porni" ${u.can_start?'checked':''} ${dis}></td>
+      <td class="perm"><input type="checkbox" data-perm="can_reset" aria-label="Poate reseta" ${u.can_reset?'checked':''} ${dis}></td>
+      <td class="perm"><input type="checkbox" data-perm="can_edit" aria-label="Poate edita timpul" ${u.can_edit?'checked':''} ${dis}></td>
+      <td><div class="actions"><button class="btn primary" data-save="${u.id}">SALVEAZĂ</button><button class="btn" data-admin="${u.id}" ${u.id===currentUser.id?'disabled':''}>${admin?'RETRAGE ADMIN':'PROMOVEAZĂ ADMIN'}</button></div></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6"><div class="empty">Nu există utilizatori care corespund căutării.</div></td></tr>';
+  // Admin checkboxes are disabled because the admin role already grants all permissions.
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function loadUsers(){
+  if(!profile?.is_admin){setStatus('usersStatus','Doar administratorii pot vedea lista.',true);return}
+  $('refresh').disabled=true;setStatus('usersStatus','Se încarcă utilizatorii…');
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_start,can_reset,can_edit,created_at').order('created_at',{ascending:true});
+  $('refresh').disabled=false;
+  if(error){setStatus('usersStatus','Nu am putut încărca lista: '+error.message,true);return}
+  allUsers=data||[];renderUsers();setStatus('usersStatus',`Au fost încărcate ${allUsers.length} conturi.`);
+}
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!sb){setStatus('loginStatus','Completează SUPABASE_URL și SUPABASE_PUBLISHABLE_KEY în admin.html.',true);return}
+  $('loginBtn').disabled=true;
+  const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+  $('loginBtn').disabled=false;
+  if(error){setStatus('loginStatus','Autentificare eșuată: '+error.message,true);return}
+  currentUser=data.user;await loadMyProfile();updatePanels();
+  if(profile?.is_admin){setStatus('loginStatus','Autentificare reușită.');await loadUsers()}
+  else setStatus('loginStatus','Acest cont nu este administrator.',true);
+});
+$('logout').addEventListener('click',async()=>{await sb.auth.signOut();currentUser=null;profile=null;allUsers=[];updatePanels();$('usersBody').innerHTML='';setStatus('loginStatus','Ai ieșit din cont.')});
+$('refresh').addEventListener('click',loadUsers);
+$('search').addEventListener('input',renderUsers);
+$('usersBody').addEventListener('click',async e=>{
+  const save=e.target.closest('[data-save]');
+  const promote=e.target.closest('[data-admin]');
+  if(!profile?.is_admin){toast('Acces refuzat.',true);return}
+  if(save){
+    const id=save.dataset.save,row=$('usersBody').querySelector(`tr[data-id="${id}"]`),u=allUsers.find(x=>x.id===id);
+    if(!row||!u)return;
+    const vals={can_start:!!row.querySelector('[data-perm="can_start"]')?.checked,can_reset:!!row.querySelector('[data-perm="can_reset"]')?.checked,can_edit:!!row.querySelector('[data-perm="can_edit"]')?.checked};
+    save.disabled=true;
+    const {error}=await sb.rpc('set_user_access',{p_user_id:id,p_is_admin:!!u.is_admin,p_can_start:vals.can_start,p_can_reset:vals.can_reset,p_can_edit:vals.can_edit});
+    save.disabled=false;
+    if(error){toast('Nu am putut salva: '+error.message,true);return}
+    toast('Permisiunile au fost salvate.');await loadUsers();return;
+  }
+  if(promote){
+    const id=promote.dataset.admin,u=allUsers.find(x=>x.id===id);
+    if(!u||id===currentUser.id)return;
+    const makeAdmin=!u.is_admin;
+    if(!confirm(makeAdmin?`Îl promovezi pe ${u.email} la administrator? Va primi toate permisiunile și va putea gestiona toți utilizatorii.`:`Retragi rolul de administrator pentru ${u.email}?`))return;
+    promote.disabled=true;
+    const {error}=await sb.rpc('set_user_access',{p_user_id:id,p_is_admin:makeAdmin,p_can_start:false,p_can_reset:false,p_can_edit:false});
+    promote.disabled=false;
+    if(error){toast('Nu am putut schimba rolul: '+error.message,true);return}
+    toast(makeAdmin?'Utilizator promovat la administrator.':'Rolul de administrator a fost retras.');await loadUsers();
+  }
+});
+async function init(){
+  if(!sb){setStatus('loginStatus','Completează SUPABASE_URL și SUPABASE_PUBLISHABLE_KEY în admin.html.',true);return}
+  const {data}=await sb.auth.getSession();currentUser=data.session?.user||null;
+  await loadMyProfile();updatePanels();if(profile?.is_admin)await loadUsers();
+  sb.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;await loadMyProfile();updatePanels();if(profile?.is_admin)await loadUsers()},0)});
+}
+init();
+</script>
+</body>
+</html>

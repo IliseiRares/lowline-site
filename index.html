@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#090d17">
-  <meta name="description" content="Monitor cooldown de 3 ore pentru 14 magazine FiveM. Salvare automată locală, cronometre live și filtre.">
+  <meta name="description" content="Monitor cooldown de 3 ore pentru 14 magazine FiveM. Cronometre sincronizate prin Supabase.">
   <title>Cooldown Magazine • FiveM RP Tools</title>
   <style>
     :root {
@@ -114,6 +114,25 @@
     .outline-btn:hover{background:#23354e}.outline-btn.danger{color:#efa0aa;background:#281d29;border-color:#67404a}.outline-btn.danger:hover{background:#442834}
     footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid #263348;margin-top:25px;padding-top:21px;color:var(--subtle);font-size:11px;line-height:1.5}
     footer b{color:var(--orange)}
+    .admin-panel{margin:0 0 20px;border:1px solid var(--line);background:#131c2b;border-radius:16px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+    .admin-panel h2{font-size:14px;margin:0 0 5px}.admin-panel p{font-size:11px;color:var(--muted);margin:0;line-height:1.6}
+    .admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.admin-controls input{background:#0d1523;color:var(--text);border:1px solid #3c4c65;border-radius:9px;padding:10px 12px;min-width:180px;font-size:12px}
+    .admin-status{color:var(--green)!important;font-weight:800}.admin-status.viewer{color:var(--muted)!important}
+
+    .auth-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,1fr);gap:14px;margin:0 0 20px}
+    .auth-card,.account-card{border:1px solid var(--line);background:#131c2b;border-radius:16px;padding:20px}
+    .auth-card h2,.account-card h2{font-size:15px;margin:0 0 7px}
+    .auth-card p,.account-card p{font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 14px}
+    .auth-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .auth-form input{width:100%;min-width:0;background:#0d1523;color:var(--text);border:1px solid #3c4c65;border-radius:9px;padding:11px 12px;font-size:12px}
+    .auth-form .full{grid-column:1/-1}
+    .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .link-btn{background:transparent;border:0;color:#8fcaff;text-decoration:underline;font-size:11px;padding:8px 0}
+    .permission-note{font-size:11px;color:var(--muted);line-height:1.6}
+    .admin-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#b8ddff;border:1px solid #355172;background:#1a2b43;border-radius:10px;padding:11px 13px;font-size:10px;font-weight:850}
+    .edit-btn{border:1px solid #46617f;background:#1b2b41;color:#c4dcff;border-radius:10px;padding:0 12px;font-size:10px;font-weight:850}
+    @media(max-width:800px){.auth-layout{grid-template-columns:1fr}}
+    @media(max-width:520px){.auth-form{grid-template-columns:1fr}.auth-form .full{grid-column:auto}}
     .toast{position:fixed;bottom:21px;left:50%;transform:translate(-50%,17px);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;background:#1b3553;border:1px solid #4c83b8;color:#d6edff;border-radius:12px;padding:13px 17px;box-shadow:0 12px 38px #0008;font-size:12px;font-weight:750;text-align:center;max-width:min(90vw,530px)}
     .toast.show{opacity:1;transform:translate(-50%,0)}.toast.error{background:#43232c;border-color:#925465;color:#ffd1d6}
     .dialog-backdrop{position:fixed;inset:0;background:#050810c9;z-index:30;display:grid;place-items:center;padding:18px;backdrop-filter:blur(4px)}
@@ -133,7 +152,7 @@
   <div class="wrap">
     <nav class="topline" aria-label="Identificare aplicație">
       <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M3 9v11h18V9M3 9h18"/><path d="M9 9v3a3 3 0 0 1-6 0M15 9v3a3 3 0 0 1-6 0M21 9v3a3 3 0 0 1-6 0M9 20v-6h6v6"/></svg></span><span>FIVEM <span class="brand-accent">/</span> RP TOOLS</span></div>
-      <div class="top-meta"><span class="pill clock-pill" id="localClock">--:--:--</span><span class="pill"><span class="live-dot"></span>SALVARE AUTOMATĂ</span></div>
+      <div class="top-meta"><a class="pill" href="login.html" style="text-decoration:none;color:#b9dfff">CONTUL MEU ↗</a><span class="pill clock-pill" id="localClock">--:--:--</span><span class="pill"><span class="live-dot"></span>SALVARE AUTOMATĂ</span></div>
     </nav>
 
     <header class="hero">
@@ -170,13 +189,39 @@
         </div>
       </div>
       <section id="storeGrid" class="grid" aria-label="Magazin și cronometru"></section>
-      <div class="management">
-        <div><h2>Administrare cronometre</h2><p>Poți salva un backup, îl poți restaura sau poți reseta toate cronometrele.</p></div>
-        <div class="management-buttons"><button class="outline-btn" type="button" id="exportBtn">↓ EXPORTĂ BACKUP</button><button class="outline-btn" type="button" id="importBtn">↑ IMPORTĂ</button><button class="outline-btn danger" type="button" id="resetAllBtn">RESETEAZĂ TOT</button></div>
+      <section class="auth-layout" aria-label="Cont utilizator">
+        <div class="auth-card">
+          <p class="kicker">CONT PERSONAL</p>
+          <h2 id="authHeading">Autentificare</h2>
+          <p id="adminStatus" class="admin-status viewer">Poți vedea cronometrele fără cont. Autentifică-te pentru funcțiile permise contului tău.</p>
+          <form class="auth-form" id="loginForm">
+            <input class="full" id="adminEmail" type="email" placeholder="Adresa de email" autocomplete="username" aria-label="Email" required>
+            <input class="full" id="adminPassword" type="password" placeholder="Parolă (minimum 8 caractere)" autocomplete="current-password" aria-label="Parolă" minlength="8" required>
+            <button class="outline-btn full" id="loginBtn" type="submit">AUTENTIFICARE</button>
+          </form>
+          <div class="auth-actions" id="authLinks">
+            <button class="link-btn" type="button" id="showSignupBtn">Creează cont nou</button>
+            <button class="link-btn" type="button" id="forgotPasswordBtn">Am uitat parola</button>
+          </div>
+          <div class="auth-actions" id="logoutControls" hidden>
+            <button class="outline-btn" type="button" id="logoutBtn">IEȘIRE DIN CONT</button>
+            <a class="admin-link" id="adminPageLink" href="admin.html" hidden>GESTIONEAZĂ UTILIZATORII ↗</a>
+          </div>
+        </div>
+        <div class="account-card">
+          <p class="kicker">DREPTURI DE ACCES</p>
+          <h2>Permisiunile contului</h2>
+          <p id="permissionSummary">Vizitator: doar vizualizare. Conturile noi primesc implicit acces de vizualizare până când un administrator le acordă permisiuni.</p>
+          <div class="permission-note">Administratorul poate acorda separat dreptul de a porni cronometre, de a reseta cronometre și de a edita timpul rămas. Nu partaja parola contului tău.</div>
+        </div>
+      </section>
+      <div class="management" id="managementPanel" hidden>
+        <div><h2>Administrare cronometre</h2><p>Exportă un backup, restaurează-l sau resetează toate cronometrele. Aceste acțiuni sunt disponibile doar conturilor cu permisiunile necesare.</p></div>
+        <div class="management-buttons"><button class="outline-btn" type="button" id="exportBtn">↓ EXPORTĂ BACKUP</button><button class="outline-btn" type="button" id="importBtn">↑ IMPORTĂ</button><button class="outline-btn danger" type="button" id="resetAllBtn" hidden>RESETEAZĂ TOT</button></div>
         <input type="file" id="importFile" accept=".json,application/json" hidden aria-label="Încarcă backup cooldown">
       </div>
     </main>
-    <footer><span><b>FIVEM / RP TOOLS</b> • Tracker cooldown jaf magazine</span><span>Datele se salvează local în acest browser • Nu necesită internet</span></footer>
+    <footer><span><b>FIVEM / RP TOOLS</b> • Tracker cooldown jaf magazine</span><span>Date sincronizate online prin Supabase • Actualizare automată</span></footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="dialog-backdrop" id="confirmBackdrop" hidden>
@@ -185,8 +230,17 @@
       <div class="dialog-buttons"><button class="dialog-no" type="button" id="cancelConfirm">ANULEAZĂ</button><button class="dialog-yes" type="button" id="acceptConfirm">CONFIRMĂ</button></div>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     'use strict';
+    // CONFIGURARE: completează URL-ul proiectului și cheia publishable din Supabase.
+    // Nu introduce niciodată o cheie secretă / service_role în acest fișier public.
+    const SUPABASE_URL = 'PASTE_YOUR_SUPABASE_PROJECT_URL_HERE';
+    const SUPABASE_PUBLISHABLE_KEY = 'PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE';
+    const supabaseConfigured = !SUPABASE_URL.includes('PASTE_') && !SUPABASE_PUBLISHABLE_KEY.includes('PASTE_') && window.supabase;
+    const supabaseClient = supabaseConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+    const cloud = {user:null, profile:null, isAdmin:false, permissions:{can_start:false,can_reset:false,can_edit:false}, ready:false, busy:false, lastSync:0};
+    const hasPermission = name => cloud.isAdmin || cloud.permissions[name] === true;
     // Cooldown de 3 ore pentru fiecare magazin. Se calculează pe baza orei absolute,
     // nu a numărului de secunde petrecute cu pagina deschisă.
     const DURATION = 3 * 60 * 60 * 1000;
@@ -217,17 +271,50 @@
     let lastFocus = null;
     let previousActiveIds = new Set();
 
-    function safeLoad() {
-      try {
-        const text = localStorage.getItem(STORAGE_KEY);
-        if (text) {
-          const obj = JSON.parse(text);
-          state.timers = validateTimers(obj.timers || {});
-        }
-      } catch (err) {
-        state.storageAvailable = false;
-        console.warn('Datele salvate nu au putut fi citite:', err);
+    // Cronometrele se citesc din Supabase, nu din localStorage: toți vizitatorii văd aceleași date.
+    async function loadTimers(showToast=false) {
+      if(!supabaseClient){
+        el('storeGrid').innerHTML='<div class="empty-list"><strong>Supabase nu este configurat</strong>Completează SUPABASE_URL și SUPABASE_PUBLISHABLE_KEY în fișierul HTML.</div>';
+        return;
       }
+      const {data,error}=await supabaseClient.from('cooldown_timers').select('shop_id,started_at,end_at');
+      if(error){console.error(error);notify('Nu am putut încărca datele din Supabase: '+error.message,true);return;}
+      const raw={};
+      for(const row of (data||[])) raw[row.shop_id]={startedAt:Number(row.started_at),endAt:Number(row.end_at)};
+      state.timers=validateTimers(raw);cloud.lastSync=Date.now();cloud.ready=true;
+      renderCards();
+      if(showToast)notify('Cronometrele au fost sincronizate.');
+    }
+    async function saveTimerToCloud(id,timer) {
+      if(!hasPermission('can_start')){notify('Contul tău nu are dreptul să pornească cronometre.',true);return false;}
+      const {error}=await supabaseClient.rpc('start_timer',{p_shop_id:id,p_started_at:timer.startedAt,p_end_at:timer.endAt});
+      if(error){console.error(error);notify('Pornirea a eșuat: '+error.message,true);return false;}
+      state.timers[id]=timer;renderCards();updateLive();return true;
+    }
+    async function editTimerInCloud(id,timer) {
+      if(!hasPermission('can_edit')){notify('Contul tău nu are dreptul să editeze cronometre.',true);return false;}
+      const {error}=await supabaseClient.rpc('edit_timer',{p_shop_id:id,p_started_at:timer.startedAt,p_end_at:timer.endAt});
+      if(error){console.error(error);notify('Editarea a eșuat: '+error.message,true);return false;}
+      state.timers[id]=timer;renderCards();updateLive();return true;
+    }
+    async function deleteTimerFromCloud(id) {
+      if(!hasPermission('can_reset')){notify('Contul tău nu are dreptul să reseteze cronometre.',true);return false;}
+      const {error}=await supabaseClient.rpc('reset_timer',{p_shop_id:id});
+      if(error){console.error(error);notify('Resetarea a eșuat: '+error.message,true);return false;}
+      delete state.timers[id];renderCards();updateLive();return true;
+    }
+    async function resetAllCloud() {
+      if(!hasPermission('can_reset')){notify('Contul tău nu are dreptul să reseteze cronometrele.',true);return false;}
+      const {error}=await supabaseClient.rpc('reset_all_timers');
+      if(error){console.error(error);notify('Resetarea tuturor a eșuat: '+error.message,true);return false;}
+      state.timers={};renderCards();updateLive();return true;
+    }
+    async function saveAllToCloud(timers) {
+      if(!hasPermission('can_edit')||!hasPermission('can_reset')){notify('Pentru restaurarea backup-ului ai nevoie de permisiunile de editare și resetare.',true);return false;}
+      const payload=Object.fromEntries(Object.entries(timers).map(([id,t])=>[id,{startedAt:t.startedAt,endAt:t.endAt}]));
+      const {error}=await supabaseClient.rpc('replace_all_timers',{p_timers:payload});
+      if(error){notify('Importul a eșuat: '+error.message,true);return false;}
+      state.timers=timers;renderCards();updateLive();return true;
     }
     function validateTimers(raw) {
       const valid = {};
@@ -242,10 +329,6 @@
         }
       }
       return valid;
-    }
-    function save() {
-      try { localStorage.setItem(STORAGE_KEY,JSON.stringify({version:1,timers:state.timers}));state.storageAvailable=true; }
-      catch (err) {state.storageAvailable=false;notify('Browserul nu permite salvarea locală. Poți exporta un backup.',true);}
     }
     const remaining = (id, now=Date.now()) => Math.max(0,(state.timers[id]?.endAt || 0)-now);
     const isActive = (id, now=Date.now()) => remaining(id,now)>0;
@@ -267,10 +350,25 @@
     }
     function escapeHTML(str) {return String(str).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
     const STORE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10V21h18V10M3 10l2-6h14l2 6"/><path d="M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M9 21v-7h6v7"/></svg>';
-    function startTimer(id) {
-      if(!SHOP_IDS.has(id) || isActive(id)) return;
-      const now=Date.now();state.timers[id]={startedAt:now,endAt:now+DURATION};save();renderCards();updateLive();
-      notify(`${SHOPS.find(x=>x.id===id).name}: cooldown pornit pentru 3 ore.`);
+    async function startTimer(id) {
+      if(!hasPermission('can_start')){notify('Contul tău nu are dreptul să pornească cronometre.',true);return;}
+      if(!SHOP_IDS.has(id) || isActive(id) || cloud.busy) return;
+      cloud.busy=true;
+      try {const now=Date.now();const ok=await saveTimerToCloud(id,{startedAt:now,endAt:now+DURATION});if(ok)notify(`${SHOPS.find(x=>x.id===id).name}: cooldown pornit pentru 3 ore.`);}
+      finally {cloud.busy=false;}
+    }
+    async function editTimer(id) {
+      if(!hasPermission('can_edit')){notify('Contul tău nu are dreptul să editeze cronometre.',true);return;}
+      const timer=state.timers[id],shop=SHOPS.find(s=>s.id===id);
+      if(!timer||!shop)return;
+      const remainingMinutes=Math.max(1,Math.ceil((timer.endAt-Date.now())/60000));
+      const input=prompt(`Editează timpul rămas pentru ${shop.name}. Introdu numărul de minute (1–180):`,String(Math.min(180,remainingMinutes)));
+      if(input===null)return;
+      const minutes=Number(input);
+      if(!Number.isInteger(minutes)||minutes<1||minutes>180){notify('Introdu un număr întreg între 1 și 180.',true);return;}
+      const endAt=Date.now()+minutes*60000;
+      const startedAt=endAt-DURATION;
+      if(await editTimerInCloud(id,{startedAt,endAt}))notify(`Timpul pentru ${shop.name} a fost actualizat.`);
     }
     function confirmAction(title,description,onYes) {
       pendingConfirm=onYes;lastFocus=document.activeElement;
@@ -279,9 +377,10 @@
     }
     function closeConfirm() {pendingConfirm=null;el('confirmBackdrop').hidden=true;if(lastFocus?.isConnected)lastFocus.focus();}
     function resetTimer(id) {
+      if(!hasPermission('can_reset')){notify('Contul tău nu are dreptul să reseteze cronometre.',true);return;}
       const shop=SHOPS.find(s=>s.id===id);if(!shop)return;
-      confirmAction('Resetezi acest magazin?',`${shop.name} va deveni imediat disponibil. Cronometrul pornit va fi șters.`,()=>{
-        delete state.timers[id];save();renderCards();updateLive();notify(`${shop.name} este disponibil din nou.`);
+      confirmAction('Resetezi acest magazin?',`${shop.name} va deveni imediat disponibil. Cronometrul pornit va fi șters.`,async()=>{
+        if(await deleteTimerFromCloud(id))notify(`${shop.name} este disponibil din nou.`);
       });
     }
     function renderCards() {
@@ -299,7 +398,7 @@
         const timing=active?`<span>START: <strong>${timeFmt.format(new Date(started))}</strong></span><span>LIBER: <strong>${dayTag(end,now)} ${timeFmt.format(new Date(end))}</strong></span>`:
           (t ? '<span><strong>COOLDOWN ÎNCHEIAT</strong></span><span>POȚI PORNI DIN NOU</span>':'<span>NICIUN COOLDOWN ACTIV</span><span>GATA DE JAF</span>');
         const progress=active?Math.max(0,Math.min(100,(DURATION-ms)/DURATION*100)):100;
-        return `<article class="store ${active?'active':'ready'}" data-shop="${shop.id}" ${active?'':'tabindex="0" role="button" aria-label="Pornește cooldown pentru '+escapeHTML(shop.name)+'"'}>
+        return `<article class="store ${active?'active':'ready'}" data-shop="${shop.id}" ${(!active&&hasPermission('can_start'))?'tabindex="0" role="button" aria-label="Pornește cooldown pentru '+escapeHTML(shop.name)+'"':''}>
           <div class="store-inner">
             <div class="store-top"><div class="store-identity"><span class="shop-icon">${STORE_SVG}</span><span class="store-index">MAGAZIN #${pad(shop.index+1)}</span></div><span class="status"><i></i>${active?'ÎN COOLDOWN':'DISPONIBIL'}</span></div>
             <h3 class="store-name">${escapeHTML(shop.name)}</h3>
@@ -307,8 +406,7 @@
             <div class="count" data-time="${shop.id}">${active?countdown(ms):'DISPONIBIL'}</div>
             <div class="progress"><div class="progress-fill" data-progress="${shop.id}" style="width:${progress}%"></div></div>
             <div class="times" data-times="${shop.id}">${timing}</div>
-            <div class="store-actions">${active?`<button class="wait-btn" type="button" disabled>◷ CD ÎN DESFĂȘURARE</button><button class="cancel-btn" type="button" data-reset="${shop.id}" aria-label="Resetează cooldown ${escapeHTML(shop.name)}" title="Resetează doar acest magazin">↺</button>`:
-            `<button class="main-btn" type="button" data-start="${shop.id}">◷ PORNEȘTE COOLDOWN 3H</button>`}</div>
+            ${(hasPermission('can_start')||hasPermission('can_reset')||hasPermission('can_edit'))?`<div class="store-actions">${active?`${hasPermission('can_edit')?`<button class="edit-btn" type="button" data-edit="${shop.id}">EDITEAZĂ TIMPUL</button>`:''}${hasPermission('can_reset')?`<button class="cancel-btn" type="button" data-reset="${shop.id}" aria-label="Resetează cooldown ${escapeHTML(shop.name)}" title="Resetează doar acest magazin">↺</button>`:''}`:`${hasPermission('can_start')?`<button class="main-btn" type="button" data-start="${shop.id}">◷ PORNEȘTE COOLDOWN 3H</button>`:''}`}</div>`:''}
           </div></article>`;
       }).join(''):'<div class="empty-list"><strong>Niciun magazin găsit</strong>Încearcă altă căutare sau selectează un alt filtru.</div>';
       previousActiveIds=new Set(SHOPS.filter(s=>isActive(s.id,now)).map(s=>s.id));
@@ -366,8 +464,9 @@
         const raw=JSON.parse(await file.text());
         if(raw.app!=='FiveM Cooldown Magazine'||raw.version!==1||!raw.timers||typeof raw.timers!=='object'||Array.isArray(raw.timers))throw Error('Fișierul nu este un backup valid al aplicației.');
         const timers=validateTimers(raw.timers);
-        confirmAction('Restaurezi backup-ul?','Cronometrele actuale vor fi înlocuite cu cele din fișierul ales. Datele din fișier păstrează orele originale de expirare.',()=>{
-          state.timers=timers;save();renderCards();updateLive();notify('Backup restaurat cu succes.');
+        if(!hasPermission('can_edit')||!hasPermission('can_reset'))throw Error('Ai nevoie de permisiunile de editare și resetare pentru restaurarea backup-ului.');
+        confirmAction('Restaurezi backup-ul?','Cronometrele din baza de date vor fi înlocuite cu cele din fișierul ales.',async()=>{
+          if(await saveAllToCloud(timers))notify('Backup restaurat cu succes.');
         });
       } catch(e){notify(e.message||'Nu am putut citi acest backup.',true);}
       finally {el('importFile').value='';}
@@ -377,23 +476,23 @@
       if(reset){event.stopPropagation();resetTimer(reset.dataset.reset);return;}
       const start=event.target.closest('[data-start]');
       if(start){event.stopPropagation();startTimer(start.dataset.start);return;}
+      const edit=event.target.closest('[data-edit]');
+      if(edit){event.stopPropagation();editTimer(edit.dataset.edit);return;}
       const card=event.target.closest('.store.ready');
-      if(card)startTimer(card.dataset.shop);
+      if(card&&hasPermission('can_start'))startTimer(card.dataset.shop);
     });
     el('storeGrid').addEventListener('keydown',event=>{
-      if(event.target.matches('.store.ready')&&(event.key==='Enter'||event.key===' ')){
+      if(hasPermission('can_start')&&event.target.matches('.store.ready')&&(event.key==='Enter'||event.key===' ')){
         event.preventDefault();startTimer(event.target.dataset.shop);
       }
     });
     document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>setFilter(btn.dataset.filter)));
     el('search').addEventListener('input',e=>{state.query=e.target.value.toLocaleLowerCase('ro-RO').trim();renderCards();});
     el('sort').addEventListener('change',e=>{state.sort=e.target.value;renderCards();});
-    el('exportBtn').addEventListener('click',exportBackup);
-    el('importBtn').addEventListener('click',()=>el('importFile').click());
+    el('exportBtn').addEventListener('click',()=>{if(cloud.user)exportBackup();else notify('Autentifică-te pentru a exporta backup-ul.',true);});
+    el('importBtn').addEventListener('click',()=>{if(hasPermission('can_edit')&&hasPermission('can_reset'))el('importFile').click();else notify('Ai nevoie de permisiunile de editare și resetare pentru import.',true);});
     el('importFile').addEventListener('change',e=>importBackup(e.target.files[0]));
-    el('resetAllBtn').addEventListener('click',()=>confirmAction('Resetezi TOATE magazinele?','Vei șterge toate cooldown-urile și toate cele 14 magazine vor deveni disponibile. Poți exporta un backup înainte.',()=>{
-      state.timers={};save();renderCards();updateLive();notify('Toate magazinele au fost resetate.');
-    }));
+    el('resetAllBtn').addEventListener('click',()=>{if(!hasPermission('can_reset')){notify('Contul tău nu are dreptul să reseteze cronometrele.',true);return;}confirmAction('Resetezi TOATE magazinele?','Vei șterge toate cooldown-urile și toate cele 14 magazine vor deveni disponibile.',async()=>{if(await resetAllCloud())notify('Toate magazinele au fost resetate.');});});
     el('cancelConfirm').addEventListener('click',closeConfirm);
     el('acceptConfirm').addEventListener('click',()=>{const action=pendingConfirm;closeConfirm();if(action)action();});
     el('confirmBackdrop').addEventListener('click',e=>{if(e.target===el('confirmBackdrop'))closeConfirm();});
@@ -405,10 +504,97 @@
         if(!e.shiftKey&&index===1){e.preventDefault();focusables[0].focus();}
       }
     });
-    window.addEventListener('storage',e=>{if(e.key===STORAGE_KEY){safeLoad();renderCards();updateLive();notify('Datele au fost actualizate dintr-o altă filă.');}});
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateLive();});
-    safeLoad();renderCards();
-    if(!state.storageAvailable)notify('Atenție: salvarea locală este blocată în acest browser.',true);
+    function updateAdminUI() {
+      const p=cloud.permissions;
+      el('adminStatus').textContent=cloud.user
+        ? (cloud.isAdmin?'Administrator — toate permisiunile active.':`Autentificat: ${cloud.user.email||'utilizator'} — drepturi: ${[p.can_start?'pornire':'',p.can_reset?'resetare':'',p.can_edit?'editare':''].filter(Boolean).join(', ')||'doar vizualizare'}.`)
+        : 'Poți vedea cronometrele fără cont. Autentifică-te pentru funcțiile permise contului tău.';
+      el('adminStatus').classList.toggle('viewer',!cloud.user);
+      el('loginForm').hidden=!!cloud.user;
+      el('authLinks').hidden=!!cloud.user;
+      el('logoutControls').hidden=!cloud.user;
+      el('adminPageLink').hidden=!cloud.isAdmin;
+      el('permissionSummary').textContent=cloud.user
+        ? (cloud.isAdmin?'Administrator: toate permisiunile sunt active.':`Permisiuni acordate: ${[p.can_start?'pornire cronometre':'',p.can_reset?'resetare cronometre':'',p.can_edit?'editare timp':''].filter(Boolean).join(', ')||'doar vizualizare'}.`)
+        : 'Vizitator: doar vizualizare. Conturile noi primesc implicit acces de vizualizare până când un administrator le acordă permisiuni.';
+      el('managementPanel').hidden=!(hasPermission('can_edit')||hasPermission('can_reset'));
+      el('resetAllBtn').hidden=!hasPermission('can_reset');
+      el('importBtn').hidden=!(hasPermission('can_edit')&&hasPermission('can_reset'));
+      renderCards();
+    }
+    async function refreshAuth() {
+      if(!supabaseClient){updateAdminUI();return;}
+      const {data,error}=await supabaseClient.auth.getSession();
+      if(error)console.error(error);
+      cloud.user=data?.session?.user||null;
+      await loadProfile();
+      updateAdminUI();
+    }
+    async function loadProfile() {
+      cloud.profile=null;cloud.isAdmin=false;cloud.permissions={can_start:false,can_reset:false,can_edit:false};
+      if(!cloud.user||!supabaseClient)return;
+      const {data,error}=await supabaseClient.from('profiles').select('id,email,is_admin,can_start,can_reset,can_edit').eq('id',cloud.user.id).maybeSingle();
+      if(error){console.error(error);notify('Nu am putut citi permisiunile contului: '+error.message,true);return;}
+      cloud.profile=data;
+      cloud.isAdmin=!!data?.is_admin;
+      cloud.permissions={can_start:!!data?.can_start,can_reset:!!data?.can_reset,can_edit:!!data?.can_edit};
+    }
+    let authMode='login';
+    function setAuthMode(mode) {
+      authMode=mode;
+      el('authHeading').textContent=mode==='signup'?'Creează cont':'Autentificare';
+      el('loginBtn').textContent=mode==='signup'?'CREEAZĂ CONT':'AUTENTIFICARE';
+      el('showSignupBtn').textContent=mode==='signup'?'Am deja cont':'Creează cont nou';
+      el('forgotPasswordBtn').hidden=mode==='signup';
+      el('adminPassword').autocomplete=mode==='signup'?'new-password':'current-password';
+    }
+    el('showSignupBtn').addEventListener('click',()=>setAuthMode(authMode==='signup'?'login':'signup'));
+    el('forgotPasswordBtn').addEventListener('click',async()=>{
+      if(!supabaseClient){notify('Completează setările Supabase în HTML.',true);return;}
+      const email=el('adminEmail').value.trim();
+      if(!email){notify('Introdu emailul în câmpul de email, apoi apasă din nou.',true);el('adminEmail').focus();return;}
+      const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:location.href});
+      if(error)notify('Nu am putut trimite emailul de resetare: '+error.message,true);
+      else notify('Dacă emailul există, vei primi instrucțiunile de resetare.');
+    });
+    el('loginForm').addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(!supabaseClient){notify('Completează mai întâi setările Supabase din HTML.',true);return;}
+      const email=el('adminEmail').value.trim(),password=el('adminPassword').value;
+      el('loginBtn').disabled=true;
+      let result;
+      if(authMode==='signup') result=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:location.href}});
+      else result=await supabaseClient.auth.signInWithPassword({email,password});
+      el('loginBtn').disabled=false;
+      if(result.error){notify((authMode==='signup'?'Crearea contului a eșuat: ':'Autentificarea a eșuat: ')+result.error.message,true);return;}
+      if(authMode==='signup'&&!result.data.session){
+        notify('Cont creat. Verifică emailul pentru confirmare, apoi autentifică-te.');
+        setAuthMode('login');el('adminPassword').value='';return;
+      }
+      cloud.user=result.data.user;
+      await loadProfile();
+      el('adminPassword').value='';
+      updateAdminUI();
+      await loadTimers();
+      notify(authMode==='signup'?'Cont creat. Drepturile pot fi acordate de administrator.':'Autentificare reușită.');
+      setAuthMode('login');
+    });
+    el('logoutBtn').addEventListener('click',async()=>{
+      if(supabaseClient)await supabaseClient.auth.signOut();
+      cloud.user=null;cloud.profile=null;cloud.isAdmin=false;cloud.permissions={can_start:false,can_reset:false,can_edit:false};
+      updateAdminUI();notify('Ai ieșit din cont.');
+    });
+    if(supabaseClient){supabaseClient.auth.onAuthStateChange(async(_event,session)=>{
+      cloud.user=session?.user||null;
+      setTimeout(async()=>{await loadProfile();updateAdminUI();},0);
+    });}
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateLive();loadTimers();}});
+    updateAdminUI();
+    if(!supabaseClient)notify('Completează setările Supabase în HTML înainte de publicare.',true);
+    else {awaitInitialLoad();}
+    async function awaitInitialLoad(){await refreshAuth();await loadTimers();}
+    // Actualizează lista la fiecare 10 secunde pentru ca toți vizitatorii să vadă modificările administratorului.
+    setInterval(()=>{if(!document.hidden)loadTimers();},10000);
     setInterval(updateLive,1000);
   </script>
 </body>
